@@ -11,21 +11,14 @@ if (!admin.apps.length) {
   if (isProduction) {
 
     // Service Account を .env から直接取得
-    const serviceAccount = {
-      type: process.env.FIREBASE_TYPE,
-      project_id: process.env.FIREBASE_PROJECT_ID,
-      private_key_id: process.env.FIREBASE_PRIVATE_KEY_ID,
-      private_key: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, "\n"), // 改行を適切に処理
-      client_email: process.env.FIREBASE_CLIENT_EMAIL,
-      client_id: process.env.FIREBASE_CLIENT_ID,
-      auth_uri: process.env.FIREBASE_AUTH_URI,
-      token_uri: process.env.FIREBASE_TOKEN_URI,
-      auth_provider_x509_cert_url: process.env.FIREBASE_AUTH_PROVIDER_X509_CERT_URL,
-      client_x509_cert_url: process.env.FIREBASE_CLIENT_X509_CERT_URL,
-    };
+    const serviceAccount: admin.ServiceAccount = {
+    projectId: process.env.FIREBASE_PROJECT_ID || "",
+    privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, "\n") || "",
+    clientEmail: process.env.FIREBASE_CLIENT_EMAIL || "",
+ };
 
     // 必須の環境変数が欠けていないかチェック
-    if (!serviceAccount.private_key || !serviceAccount.client_email) {
+    if (!serviceAccount.privateKey || !serviceAccount.clientEmail) {
       console.error("❌ Missing Firebase service account credentials in environment variables.");
       process.exit(1);
     }
