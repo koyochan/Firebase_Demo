@@ -1,56 +1,30 @@
-import admin from "firebase-admin";
-import dotenv from "dotenv";
-import { boolean } from "astro:schema";
+import type { ServiceAccount } from "firebase-admin";
+import { initializeApp, cert, getApps } from "firebase-admin/app";
 
-dotenv.config(); // .env ファイルを読み込む
+const activeApps = getApps();
+const serviceAccount = {
+  type: "service_account",
+  project_id: import.meta.env.FIREBASE_PROJECT_ID,
+  private_key_id: import.meta.env.FIREBASE_PRIVATE_KEY_ID,
+  private_key: import.meta.env.FIREBASE_PRIVATE_KEY,
+  client_email: import.meta.env.FIREBASE_CLIENT_EMAIL,
+  client_id: import.meta.env.FIREBASE_CLIENT_ID,
+  auth_uri: import.meta.env.FIREBASE_AUTH_URI,
+  token_uri: import.meta.env.FIREBASE_TOKEN_URI,
+  auth_provider_x509_cert_url: import.meta.env.FIREBASE_AUTH_CERT_URL,
+  client_x509_cert_url: import.meta.env.FIREBASE_CLIENT_CERT_URL,
+};
 
-const isProduction = process.env.PUBLIC_IS_PRODUCTION === "production";
-console.log(`🚀 Running in ${isProduction ? "Production" : "Development"} Mode`);
-
-// Firebase Admin SDK が未初期化なら実行
-if (!admin.apps.length) {
-  if (isProduction) {
-
-    // Service Account を .env から直接取得
-    const serviceAccount: admin.ServiceAccount = {
-    projectId: process.env.FIREBASE_PROJECT_ID || "",
-    privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, "\n") || "",
-    clientEmail: process.env.FIREBASE_CLIENT_EMAIL || "",
- };
-
-    // 必須の環境変数が欠けていないかチェック
-    if (!serviceAccount.privateKey || !serviceAccount.clientEmail) {
-      console.error("❌ Missing Firebase service account credentials in environment variables.");
-      process.exit(1);
-    }
-
-    // Firebase Admin SDK を初期化
-    admin.initializeApp({
-      credential: admin.credential.cert(serviceAccount),
-      projectId: process.env.FIREBASE_PROJECT_ID,
-    });
-
-    console.log("✅ Firebase Admin SDK initialized successfully in **Production** mode!");
-  } else {
-    console.log("⚠ Running in Test Mode (Emulator)");
-
-    // エミュレータ環境変数が設定されているか確認
-    if (!process.env.PUBLIC_FIRESTORE_EMULATOR_HOST || !process.env.PUBLIC_FIREBASE_AUTH_EMULATOR_HOST) {
-      console.error("❌ FIRESTORE_EMULATOR_HOST or FIREBASE_AUTH_EMULATOR_HOST is not set.");
-      process.exit(1);
-    }
-
-    // Firebase エミュレータ用の初期化
-    admin.initializeApp({ projectId: process.env.FIREBASE_PROJECT_ID });
-
-    console.log("✅ Firebase Admin SDK initialized successfully in **Emulator** mode!");
+const initApp = () => {
+  if (import.meta.env.PROD) {
+    console.info('PROD env detected. Using default service account.')
+    // Use default config in firebase functions. Should be already injected in the server by Firebase.
+    return initializeApp()
   }
+  console.info('Loading service account from env.')
+  return initializeApp({
+    credential: cert(serviceAccount as ServiceAccount)
+  })
 }
 
-// Firestore & Auth のインスタンスを取得
-const db = admin.firestore();
-const auth = admin.auth();
-
-console.log("🔥 Firestore & Auth services are ready to use!");
-
-export { db, auth, isProduction };
+export const app = activeApps.length === 0 ? initApp() : activeApps[0];
