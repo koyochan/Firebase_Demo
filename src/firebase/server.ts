@@ -1,9 +1,10 @@
 import admin from "firebase-admin";
 import dotenv from "dotenv";
+import { boolean } from "astro:schema";
 
 dotenv.config(); // .env ファイルを読み込む
 
-const isProduction = process.env.PUBLIC_IS_PRODUCTION;
+const isProduction = process.env.PUBLIC_IS_PRODUCTION === "production";
 console.log(`🚀 Running in ${isProduction ? "Production" : "Development"} Mode`);
 
 // Firebase Admin SDK が未初期化なら実行

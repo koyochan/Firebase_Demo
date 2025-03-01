@@ -3,6 +3,8 @@ dist/
 # generated types
 .astro/
 
+service_acount_key.json
+
 # dependencies
 node_modules/
 

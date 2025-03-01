@@ -2,7 +2,7 @@ import { initializeApp, getApps, getApp } from "firebase/app";
 import { getFirestore, connectFirestoreEmulator } from "firebase/firestore";
 import { getAuth, connectAuthEmulator } from "firebase/auth";
 
-const isProduction = import.meta.env.PUBLIC_IS_PRODUCTION;
+const isProduction = process.env.PUBLIC_IS_PRODUCTION === "production";
 
 const firebaseConfig = isProduction
   ? {

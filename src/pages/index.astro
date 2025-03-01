@@ -2,8 +2,8 @@
 import BaseHead from '../components/BaseHead.astro';
 import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
-import '@/lib/firebase-client';
-import '@/lib/firebase-admin';
+import '@/firebase/client';
+import '@/firebase/server';
 import { SITE_TITLE, SITE_DESCRIPTION } from '../consts';
 ---
 
@@ -17,11 +17,10 @@ import { SITE_TITLE, SITE_DESCRIPTION } from '../consts';
 
 		<Header />
 		<main>
-			<h1>🧑‍🚀 Hello, Astronaut!</h1>
+			<h1>こんにちは！デモサイトへようこそ！</h1>
 			<p>
-				Welcome to the official <a href="https://astro.build/">Astro</a> blog starter template. This
-				template serves as a lightweight, minimally-styled starting point for anyone looking to build
-				a personal website, blog, or portfolio with Astro.
+				ここでは、私(小林洸太)ができることを具体的なサイトを用いて、証明させていただきます。なお、ここで使用されている技術に関しては
+				Stripe以外本番環境で動かしております。
 			</p>
 			<p>
 				This template comes with a few integrations already configured in your
