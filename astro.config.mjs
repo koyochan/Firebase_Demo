@@ -12,7 +12,7 @@ export default defineConfig({
 	vite: {
     build: {
       rollupOptions: {
-        external: ["firebase-admin"], // これで `firebase-admin` をバンドルから除外！ -> firebase-adminはNode.jsでのみ動作するため、ブラウザでの使用はできません。
+        external: ["firebase-admin", "firebase-admin/auth"], // これで `firebase-admin` をバンドルから除外！ -> firebase-adminはNode.jsでのみ動作するため、ブラウザでの使用はできません。
       },
     },
   },
