@@ -7,7 +7,7 @@ import vercel from "@astrojs/vercel";
 // https://astro.build/config
 export default defineConfig({
 	output: "server",
-	site: "example.com",
+	site: "https://firebase-demo.vercel.app",
   	adapter: vercel(),
 	vite: {
     build: {
