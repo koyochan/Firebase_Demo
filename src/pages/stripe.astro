@@ -23,7 +23,7 @@ import Layout from "@/layouts/layout.astro";
           const cardPaymentBtn = document.getElementById("card-payment-btn");
           cardPaymentBtn.addEventListener("click", async () => {
             try {
-              const res = await fetch("/api/create-payment-intent", {
+              const res = await fetch("/api/stripe/create-payment-intent", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ amount: 2000, currency: "jpy" }),
@@ -48,7 +48,7 @@ import Layout from "@/layouts/layout.astro";
           const checkoutBtn = document.getElementById("checkout-btn");
           checkoutBtn.addEventListener("click", async () => {
             try {
-              const res = await fetch("/api/create-checkout-session", {
+              const res = await fetch("/api/stripe/create-checkout-session", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ items: [{ id: "product_basic", quantity: 1 }] }),
@@ -77,7 +77,7 @@ import Layout from "@/layouts/layout.astro";
             const email = document.getElementById("sub-email").value;
             const planId = document.getElementById("plan-id").value;
             try {
-              const res = await fetch("/api/create-subscription", {
+              const res = await fetch("/api/stripe/create-subscription", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ email, planId }),
@@ -106,7 +106,7 @@ import Layout from "@/layouts/layout.astro";
           checkStatusBtn.addEventListener("click", async () => {
             const piId = document.getElementById("pi-id").value;
             try {
-              const res = await fetch("/api/get-payment-intent-status", {
+              const res = await fetch("/api/stripe/get-payment-intent-status", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ piId }),
@@ -133,7 +133,7 @@ import Layout from "@/layouts/layout.astro";
           portalBtn.addEventListener("click", async () => {
             const customerId = document.getElementById("customer-id").value;
             try {
-              const res = await fetch("/api/create-portal-session", {
+              const res = await fetch("/api/stripe/create-portal-session", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ customerId }),
@@ -167,7 +167,7 @@ import Layout from "@/layouts/layout.astro";
           const paymentsList = document.getElementById("payments-list");
           getPaymentsBtn.addEventListener("click", async () => {
             try {
-              const res = await fetch("/api/get-all-payments", {
+              const res = await fetch("/api/stripe/get-all-payments", {
                 headers: { "Content-Type": "application/json" }
               });
               const data = await res.json();
@@ -197,7 +197,7 @@ import Layout from "@/layouts/layout.astro";
           refundBtn.addEventListener("click", async () => {
             const piId = document.getElementById("refund-pi-id").value;
             try {
-              const res = await fetch("/api/refund-payment", {
+              const res = await fetch("/api/stripe/refund-payment", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ piId }),
@@ -224,7 +224,7 @@ import Layout from "@/layouts/layout.astro";
           const subsList = document.getElementById("subscriptions-list");
           getSubsBtn.addEventListener("click", async () => {
             try {
-              const res = await fetch("/api/get-all-subscriptions", {
+              const res = await fetch("/api/stripe/get-all-subscriptions", {
                 headers: { "Content-Type": "application/json" }
               });
               const data = await res.json();
@@ -254,7 +254,7 @@ import Layout from "@/layouts/layout.astro";
           cancelSubBtn.addEventListener("click", async () => {
             const subId = document.getElementById("cancel-sub-id").value;
             try {
-              const res = await fetch("/api/cancel-subscription", {
+              const res = await fetch("/api/stripe/cancel-subscription", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ subId }),
@@ -293,7 +293,7 @@ import Layout from "@/layouts/layout.astro";
 
       async function checkLoginStatus() {
         try {
-          const res = await fetch("/api/is-admin");
+          const res = await fetch("/api/auth/is-admin");
           const data = await res.json();
           if (res.ok) {
             // ログイン中
