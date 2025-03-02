@@ -4,15 +4,10 @@ import { app } from "@/firebase/server";
 
 export const POST: APIRoute = async ({ request, redirect }) => {
   const auth = getAuth(app);
-
-  console.log("Request Headers:", request.headers);
-  console.log("Content-Type:", request.headers.get("Content-Type"));
-
   let email, password, name;
 
   try {
     const contentType = request.headers.get("Content-Type") || "";
-
     if (contentType.includes("application/json")) {
       const body = await request.json();
       email = body.email?.toString();
@@ -36,13 +31,13 @@ export const POST: APIRoute = async ({ request, redirect }) => {
   }
 
   try {
-    console.log("Creating user with:");
-    console.log("Email:", email);
-    console.log("Password:", password);
-    console.log("Name:", name);
+    console.log("Creating user with:", email);
 
+    const startTime = Date.now(); // 🔹 時間計測開始
     const userRecord = await auth.createUser({ email, password, displayName: name });
-    console.log("✅ User Created:", userRecord.uid);
+    const endTime = Date.now(); // 🔹 時間計測終了
+
+    console.log(`✅ User Created: ${userRecord.uid} (処理時間: ${endTime - startTime}ms)`);
   } catch (error: any) {
     console.error("❌ Firebase Auth Error:", error.code, error.message);
     return new Response(`Firebase Auth Error: ${error.message}`, { status: 400 });
