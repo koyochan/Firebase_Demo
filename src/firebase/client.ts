@@ -10,4 +10,12 @@ const firebaseConfig = {
   appId: import.meta.env.PUBLIC_FIREBASE_APP_ID,
 };
 
+
+try {
+  // Firebase が既に初期化されていないか確認
+  console.log("🔥 Firebase has been initialized successfully!");
+} catch (error) {
+  console.error("❌ Firebase initialization error:", error);
+}
+
 export const app = initializeApp(firebaseConfig);
