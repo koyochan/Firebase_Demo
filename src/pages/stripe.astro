@@ -1,0 +1,359 @@
+---
+import Layout from "@/layouts/layout.astro";
+---
+
+<Layout>
+  <body>
+    <h1>Stripe Demo (Store + Admin) - No Firebase Client</h1>
+    <p>すべての認証処理は /api/auth で行う形。ログイン時に <strong>メールアドレス: admin.com / パスワード: admin</strong> を入力すると管理者モードが有効になります。</p>
+
+    <hr>
+
+    <!-- =========================
+         Store (ユーザー向け)
+         ========================= -->
+    <section id="store-section">
+      <h2>Store Section (公開機能)</h2>
+
+      <!-- 1. ワンタイム決済 -->
+      <div>
+        <h3>1. ワンタイム決済 (PaymentIntent)</h3>
+        <button id="card-payment-btn">カードで支払う</button>
+        <script>
+          const cardPaymentBtn = document.getElementById("card-payment-btn");
+          cardPaymentBtn.addEventListener("click", async () => {
+            try {
+              const res = await fetch("/api/create-payment-intent", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ amount: 2000, currency: "jpy" }),
+              });
+              const data = await res.json();
+              if (!res.ok) throw new Error(data.error || "決済作成に失敗");
+              alert("PaymentIntent created. clientSecret: " + data.clientSecret);
+            } catch (err) {
+              alert(err.message);
+            }
+          });
+        </script>
+      </div>
+
+      <hr/>
+
+      <!-- 2. Stripe Checkout -->
+      <div>
+        <h3>2. Stripe Checkout 決済</h3>
+        <button id="checkout-btn">Checkoutページへ</button>
+        <script>
+          const checkoutBtn = document.getElementById("checkout-btn");
+          checkoutBtn.addEventListener("click", async () => {
+            try {
+              const res = await fetch("/api/create-checkout-session", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ items: [{ id: "product_basic", quantity: 1 }] }),
+              });
+              const data = await res.json();
+              if (!res.ok) throw new Error(data.error || "Checkout Session作成失敗");
+              window.location.href = data.url;
+            } catch (err) {
+              alert(err.message);
+            }
+          });
+        </script>
+      </div>
+
+      <hr/>
+
+      <!-- 3. サブスクリプション登録 -->
+      <div>
+        <h3>3. サブスク登録</h3>
+        <label>メール: <input type="email" id="sub-email" value="test@example.com" /></label><br/>
+        <label>プランID: <input type="text" id="plan-id" value="price_XXXXX" /></label><br/>
+        <button id="subscribe-btn">サブスク登録</button>
+        <script>
+          const subscribeBtn = document.getElementById("subscribe-btn");
+          subscribeBtn.addEventListener("click", async () => {
+            const email = document.getElementById("sub-email").value;
+            const planId = document.getElementById("plan-id").value;
+            try {
+              const res = await fetch("/api/create-subscription", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email, planId }),
+              });
+              const data = await res.json();
+              if (!res.ok) throw new Error(data.error || "サブスク登録失敗");
+              alert("Subscription created. ID: " + data.subscriptionId);
+            } catch (err) {
+              alert(err.message);
+            }
+          });
+        </script>
+      </div>
+
+      <hr/>
+
+      <!-- 4. 支払いステータス確認 -->
+      <div>
+        <h3>4. 支払いステータス確認</h3>
+        <label>PaymentIntent ID: <input type="text" id="pi-id" placeholder="pi_XXXXX" /></label>
+        <button id="check-status-btn">ステータス確認</button>
+        <div id="status-result"></div>
+        <script>
+          const checkStatusBtn = document.getElementById("check-status-btn");
+          const statusResult = document.getElementById("status-result");
+          checkStatusBtn.addEventListener("click", async () => {
+            const piId = document.getElementById("pi-id").value;
+            try {
+              const res = await fetch("/api/get-payment-intent-status", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ piId }),
+              });
+              const data = await res.json();
+              if (!res.ok) throw new Error(data.error || "ステータス取得失敗");
+              statusResult.textContent = "ステータス: " + data.status;
+            } catch (err) {
+              statusResult.textContent = err.message;
+            }
+          });
+        </script>
+      </div>
+
+      <hr/>
+
+      <!-- 5. カスタマーポータル -->
+      <div>
+        <h3>5. カスタマーポータル</h3>
+        <label>Customer ID: <input type="text" id="customer-id" placeholder="cus_XXXX" /></label>
+        <button id="portal-btn">ポータルへ</button>
+        <script>
+          const portalBtn = document.getElementById("portal-btn");
+          portalBtn.addEventListener("click", async () => {
+            const customerId = document.getElementById("customer-id").value;
+            try {
+              const res = await fetch("/api/create-portal-session", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ customerId }),
+              });
+              const data = await res.json();
+              if (!res.ok) throw new Error(data.error || "ポータルセッション作成失敗");
+              window.location.href = data.url;
+            } catch (err) {
+              alert(err.message);
+            }
+          });
+        </script>
+      </div>
+    </section>
+
+    <hr>
+
+    <!-- =========================
+         Admin (管理者向け)
+         ========================= -->
+    <section id="admin-section" style="display: none;">
+      <h2>Admin Section (要:管理者権限)</h2>
+
+      <!-- A. 全支払い一覧 -->
+      <div>
+        <h3>A. 全支払い一覧</h3>
+        <button id="get-payments-btn">支払い一覧取得</button>
+        <div id="payments-list"></div>
+        <script>
+          const getPaymentsBtn = document.getElementById("get-payments-btn");
+          const paymentsList = document.getElementById("payments-list");
+          getPaymentsBtn.addEventListener("click", async () => {
+            try {
+              const res = await fetch("/api/get-all-payments", {
+                headers: { "Content-Type": "application/json" }
+              });
+              const data = await res.json();
+              if (!res.ok) throw new Error(data.error || "支払い一覧取得失敗");
+              paymentsList.innerHTML = "";
+              data.payments.forEach((p) => {
+                const div = document.createElement("div");
+                div.textContent = `PI: ${p.id}, amount: ${p.amount}, status: ${p.status}`;
+                paymentsList.appendChild(div);
+              });
+            } catch (err) {
+              paymentsList.textContent = err.message;
+            }
+          });
+        </script>
+      </div>
+
+      <hr/>
+
+      <!-- B. 返金 -->
+      <div>
+        <h3>B. 返金</h3>
+        <label>PaymentIntent ID: <input type="text" id="refund-pi-id" /></label>
+        <button id="refund-btn">返金</button>
+        <script>
+          const refundBtn = document.getElementById("refund-btn");
+          refundBtn.addEventListener("click", async () => {
+            const piId = document.getElementById("refund-pi-id").value;
+            try {
+              const res = await fetch("/api/refund-payment", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ piId }),
+              });
+              const data = await res.json();
+              if (!res.ok) throw new Error(data.error || "返金失敗");
+              alert("Refunded. ID: " + data.refundId);
+            } catch (err) {
+              alert(err.message);
+            }
+          });
+        </script>
+      </div>
+
+      <hr/>
+
+      <!-- C. 全サブスクリプション一覧 -->
+      <div>
+        <h3>C. 全サブスクリプション一覧</h3>
+        <button id="get-subscriptions-btn">サブスク一覧</button>
+        <div id="subscriptions-list"></div>
+        <script>
+          const getSubsBtn = document.getElementById("get-subscriptions-btn");
+          const subsList = document.getElementById("subscriptions-list");
+          getSubsBtn.addEventListener("click", async () => {
+            try {
+              const res = await fetch("/api/get-all-subscriptions", {
+                headers: { "Content-Type": "application/json" }
+              });
+              const data = await res.json();
+              if (!res.ok) throw new Error(data.error || "サブスク一覧取得失敗");
+              subsList.innerHTML = "";
+              data.subscriptions.forEach((sub) => {
+                const div = document.createElement("div");
+                div.textContent = `Sub: ${sub.id}, status: ${sub.status}, items: ${JSON.stringify(sub.items)}`;
+                subsList.appendChild(div);
+              });
+            } catch (err) {
+              subsList.textContent = err.message;
+            }
+          });
+        </script>
+      </div>
+
+      <hr/>
+
+      <!-- D. サブスクキャンセル -->
+      <div>
+        <h3>D. サブスクキャンセル</h3>
+        <label>Subscription ID: <input type="text" id="cancel-sub-id" /></label>
+        <button id="cancel-sub-btn">キャンセル</button>
+        <script>
+          const cancelSubBtn = document.getElementById("cancel-sub-btn");
+          cancelSubBtn.addEventListener("click", async () => {
+            const subId = document.getElementById("cancel-sub-id").value;
+            try {
+              const res = await fetch("/api/cancel-subscription", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ subId }),
+              });
+              const data = await res.json();
+              if (!res.ok) throw new Error(data.error || "サブスクキャンセル失敗");
+              alert("Subscription canceled: " + data.subscriptionId);
+            } catch (err) {
+              alert(err.message);
+            }
+          });
+        </script>
+      </div>
+    </section>
+
+    <hr/>
+
+    <!-- =========================
+         Sign in/out (サーバーサイドAPIで認証)
+         ========================= -->
+    <section>
+      <h2>Sign in/out</h2>
+      <p>メールアドレス: <strong>admin@admin.com</strong>, パスワード: <strong>adminadmin</strong> を入力すると、管理者モードになります。</p>
+      <label>Email: <input type="email" id="email" value="admin.com" /></label><br/>
+      <label>Password: <input type="password" id="password" value="admin" /></label><br/>
+      <button id="login-btn">ログイン</button>
+      <button id="logout-btn">ログアウト</button>
+      <div id="login-status">未ログイン</div>
+    </section>
+
+    <script>
+      const loginBtn = document.getElementById("login-btn");
+      const logoutBtn = document.getElementById("logout-btn");
+      const loginStatus = document.getElementById("login-status");
+      const adminSection = document.getElementById("admin-section");
+
+      async function checkLoginStatus() {
+        try {
+          const res = await fetch("/api/is-admin");
+          const data = await res.json();
+          if (res.ok) {
+            // ログイン中
+            loginStatus.textContent = `ログイン中: ${data.email}`;
+            // 管理者かどうか
+            if (data.isAdmin) {
+              adminSection.style.display = "block";
+            } else {
+              adminSection.style.display = "none";
+            }
+          } else {
+            // 未ログイン
+            loginStatus.textContent = "未ログイン";
+            adminSection.style.display = "none";
+          }
+        } catch (err) {
+          console.error(err);
+          loginStatus.textContent = "未ログイン(エラー)";
+          adminSection.style.display = "none";
+        }
+      }
+
+      // ログイン処理 (管理者ならメモリDBなどで isAdmin=true をセットしセッション管理)
+      loginBtn.addEventListener("click", async () => {
+        const email = document.getElementById("email").value;
+        const password = document.getElementById("password").value;
+        try {
+          const res = await fetch("/api/auth/signin", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email, password }),
+          });
+          if (!res.ok) {
+            const errData = await res.json();
+            throw new Error(errData.error || "サインイン失敗");
+          }
+          alert("サインイン成功");
+          checkLoginStatus();
+        } catch (err) {
+          alert(err.message);
+        }
+      });
+
+      // ログアウト処理
+      logoutBtn.addEventListener("click", async () => {
+        try {
+          const res = await fetch("/api/auth/signout", { method: "POST" });
+          if (!res.ok) {
+            const errData = await res.json();
+            throw new Error(errData.error || "サインアウト失敗");
+          }
+          alert("サインアウト成功");
+          checkLoginStatus();
+        } catch (err) {
+          alert(err.message);
+        }
+      });
+
+      // ページ読み込み時に実行
+      window.addEventListener("DOMContentLoaded", checkLoginStatus);
+    </script>
+  </body>
+</Layout>
