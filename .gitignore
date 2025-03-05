@@ -25,3 +25,9 @@ pnpm-debug.log*
 # jetbrains setting folder
 .idea/
 .vercel
+
+Firebase-Demo/.pio
+Firebase-Demo/.vscode/.browse.c_cpp.db*
+Firebase-Demo/.vscode/c_cpp_properties.json
+Firebase-Demo/.vscode/launch.json
+Firebase-Demo/.vscode/ipch
